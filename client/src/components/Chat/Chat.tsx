@@ -1,9 +1,10 @@
-// src/components/Chat/Chat.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import './Chat.css';
 import { io, Socket } from 'socket.io-client';
 import { useLocation } from 'react-router-dom';
 import { User } from '../../types/types';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface ChatMessage {
   room: string;
@@ -44,10 +45,16 @@ const Chat: React.FC = () => {
       }
     });
 
+    socketRef.current.on('user_connected', (data) => {
+      // Mostrar la notificación cuando un nuevo usuario se conecte
+      console.log('Usuario conectado:', data);
+      toast.info(`${data.username} se ha unido a la sala ${room}`);
+    });
+
     return () => {
       socketRef.current?.disconnect();
     };
-  }, []);
+  }, [room]);
 
   useEffect(() => {
     if (chatBodyRef.current) {
@@ -56,11 +63,14 @@ const Chat: React.FC = () => {
   }, [messageList]);
 
   const joinRoom = () => {    
-    if (room) {
-      socketRef.current?.emit('join_room', room);
-      setShowChat(true);
-    }
-  };
+  if (room) {
+    socketRef.current?.emit('join_room', {
+      roomId: room,
+      username: user.name,
+    });
+    setShowChat(true);
+  }
+};
 
   const sendMessage = async () => {
     if (currentMessage !== '') {
@@ -121,6 +131,8 @@ const Chat: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Coloca el contenedor de notificaciones */}
+      <ToastContainer />
     </div>
   );
 };
